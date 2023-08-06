@@ -1,6 +1,6 @@
-const CategoryModel = require("../models/categoryModel")
-const slugify = require('slugify')
 const asyncHandler = require('express-async-handler')
+const slugify = require('slugify')
+const CategoryModel = require("../models/categoryModel")
 const ApiError = require('../utils/apiError')
 
 
@@ -13,38 +13,38 @@ exports.getCategories = asyncHandler(async (req, res) => {
 })
 
 exports.getCategory = asyncHandler(async (req, res, next) => {
-    const id = req.params.id
+    const {id} = req.params
     const category = await CategoryModel.findById(id)
     if (!category) {
-        return next(new ApiError(`No Cattegory for this id: ${id}`, 404))
+        return next(new ApiError(`No Category for this id: ${id}`, 404))
     }
     res.status(200).json({ data: category })
 })
 
 exports.createCategory = asyncHandler(async (req, res) => {
-    const name = req.body.name
+    const {name} = req.body
     const category = await CategoryModel.create({ name, slug: slugify(name) })
     res.status(201).json({ data: category })
 })
 
 exports.updateCategory = asyncHandler(async (req, res, next) => {
-    const id = req.params.id
-    const name = req.body.name
+    const {id} = req.params
+    const {name} = req.body
     const category = await CategoryModel.findByIdAndUpdate(id, { name, slug: slugify(name) }, {
         new: true
     })
     if (!category) {
-        return next(new ApiError(`No Cattegory for this id: ${id}`, 404))
+        return next(new ApiError(`No Category for this id: ${id}`, 404))
     }
     res.status(200).json({ data: category })
 
 })
 
 exports.deleteCategory = asyncHandler(async (req, res, next) => {
-    const id = req.params.id
+    const {id} = req.params
     const deletedCategory = await CategoryModel.findByIdAndDelete(id)
     if (!deletedCategory) {
-        return next(new ApiError(`No Cattegory for this id: ${id}`, 404))
+        return next(new ApiError(`No Category for this id: ${id}`, 404))
     }
     res.status(204).json({})
 
