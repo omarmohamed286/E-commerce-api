@@ -11,13 +11,10 @@ const SubCategoryRoute = require("./routes/subCategoryRoute");
 const BrandRoute = require("./routes/brandRoute");
 const ProductRoute = require('./routes/productRoute')
 
-// database connection
 dbConnection();
 
-// express app
 const app = express();
 
-// middlewares
 app.use(express.json());
 
 if (process.env.NODE_ENV === "development") {
@@ -25,7 +22,6 @@ if (process.env.NODE_ENV === "development") {
   console.log(`mode: ${process.env.NODE_ENV}`);
 }
 
-// mount routes
 
 app.use("/api/v1/categories", categoryRoute);
 app.use("/api/v1/subcategories", SubCategoryRoute);
