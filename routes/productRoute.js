@@ -5,6 +5,8 @@ const {
   getProduct,
   updateProduct,
   deleteProduct,
+  uploadProductImages,
+  resizeProductImages,
 } = require("../services/productService");
 const {
   getProductValidator,
@@ -13,16 +15,35 @@ const {
   deleteProductValidator,
 } = require("../utils/validators/productValidator");
 
+const authService = require("../services/authService");
+
 const router = express.Router();
 
-
-router.route("/").get(getProducts).post(createProductValidator, createProduct);
-
+router.route("/").get(getProducts).post(
+  authService.protect,
+  authService.allowedTo("admin", "manager"),
+  uploadProductImages,
+  resizeProductImages,
+  createProductValidator,
+  createProduct
+);
 
 router
   .route("/:id")
   .get(getProductValidator, getProduct)
-  .patch(updateProductValidator, updateProduct)
-  .delete(deleteProductValidator, deleteProduct);
+  .patch(
+    authService.protect,
+    authService.allowedTo("admin", "manager"),
+    uploadProductImages,
+    resizeProductImages,
+    updateProductValidator,
+    updateProduct
+  )
+  .delete(
+    authService.protect,
+    authService.allowedTo("admin"),
+    deleteProductValidator,
+    deleteProduct
+  );
 
 module.exports = router;
