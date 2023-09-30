@@ -87,6 +87,33 @@ exports.updateUserValidator = [
   validatorMW,
 ];
 
+exports.updateLoggedUserValidator = [
+  check("name")
+    .optional()
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
+    }),
+  check("email")
+    .optional()
+    .isEmail()
+    .withMessage("Invalid email")
+    .custom((val) =>
+      userModel.findOne({ email: val }).then((user) => {
+        if (user) {
+          return Promise.reject(new Error("E-mail is already in use"));
+        }
+      })
+    ),
+  check("phone")
+    .optional()
+    .isMobilePhone("ar-EG")
+    .withMessage("Invalid phone number"),
+
+  validatorMW,
+];
+
+
 exports.changeUserPasswordValidator = [
   check("id").isMongoId().withMessage("Invalid user id format"),
   check("currentPassword")

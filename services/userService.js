@@ -3,10 +3,11 @@ const sharp = require("sharp");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcryptjs");
 const ApiError = require("../utils/apiError");
+const generateToken = require("../utils/generateToken");
 
-const UserModel = require("../models/userModel");
 const factory = require("./handlersFactory");
 const { uploadSingleImage } = require("../middlewares/uploadImageMW");
+const userModel = require("../models/userModel");
 
 exports.uploadUserImage = uploadSingleImage("profileImg");
 
@@ -24,14 +25,14 @@ exports.resizeImage = asyncHandler(async (req, res, next) => {
   next();
 });
 
-exports.getUsers = factory.getAll(UserModel);
+exports.getUsers = factory.getAll(userModel);
 
-exports.getUser = factory.getOne(UserModel);
+exports.getUser = factory.getOne(userModel);
 
-exports.createUser = factory.createOne(UserModel);
+exports.createUser = factory.createOne(userModel);
 
 exports.updateUser = asyncHandler(async (req, res, next) => {
-  const document = await UserModel.findByIdAndUpdate(
+  const document = await userModel.findByIdAndUpdate(
     req.params.id,
     {
       name: req.body.name,
@@ -52,7 +53,7 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
 });
 
 exports.changeUserPassword = asyncHandler(async (req, res, next) => {
-  const document = await UserModel.findByIdAndUpdate(
+  const document = await userModel.findByIdAndUpdate(
     req.params.id,
     {
       password: await bcrypt.hash(req.body.password, 12),
@@ -68,4 +69,47 @@ exports.changeUserPassword = asyncHandler(async (req, res, next) => {
   res.status(200).json({ data: document });
 });
 
-exports.deleteUser = factory.deleteOne(UserModel);
+exports.deleteUser = factory.deleteOne(userModel);
+
+exports.getLoggedUserDate = asyncHandler(async (req, res, next) => {
+  req.params.id = req.user._id;
+  next();
+});
+
+exports.updateLoggedUserPassword = asyncHandler(async (req, res, next) => {
+  const user = await userModel.findByIdAndUpdate(
+    req.user._id,
+    {
+      password: await bcrypt.hash(req.body.password, 12),
+      passwordChangedAt: Date.now(),
+    },
+    {
+      new: true,
+    }
+  );
+  if (!user) {
+    return next(new ApiError(`No user for this id: ${req.user._id}`, 404));
+  }
+  const token = generateToken(user._id);
+
+  res.status(200).json({ data: user, token });
+});
+
+exports.updateLoggedUserData = asyncHandler(async (req, res, next) => {
+  const updatedUser = await userModel.findByIdAndUpdate(
+    req.user._id,
+    {
+      name: req.body.name,
+      phone: req.body.phone,
+      email: req.body.email,
+    },
+    { new: true }
+  );
+
+  res.status(200).json({ data: updatedUser });
+});
+
+exports.deleteLoggedUserData = asyncHandler(async (req, res, next) => {
+  await userModel.findByIdAndUpdate(req.user._id, { active: false });
+  res.status(204).json({ status: "Success" });
+});

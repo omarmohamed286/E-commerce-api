@@ -7,8 +7,9 @@ exports.deleteOne = (Model) =>
     const { id } = req.params;
     const document = await Model.findByIdAndDelete(id);
     if (!document) {
-      return next(new ApiError(`No product for this id: ${id}`, 404));
+      return next(new ApiError(`No document for this id: ${id}`, 404));
     }
+    document.deleteOne();
     res.status(204).json({});
   });
 
@@ -22,6 +23,7 @@ exports.updateOne = (Model) =>
         new ApiError(`No document for this id: ${req.params.id}`, 404)
       );
     }
+    document.save();
     res.status(200).json({ data: document });
   });
 
@@ -31,9 +33,13 @@ exports.createOne = (Model) =>
     res.status(201).json({ data: newDocument });
   });
 
-exports.getOne = (Model) =>
+exports.getOne = (Model, populationOpt) =>
   asyncHandler(async (req, res, next) => {
-    const document = await Model.findById(req.params.id);
+    let query = Model.findById(req.params.id);
+    if (populationOpt) {
+      query = query.populate(populationOpt);
+    }
+    const document = await query;
     if (!document) {
       return next(
         new ApiError(`No document for this id: ${req.params.id}`, 404)
@@ -42,7 +48,7 @@ exports.getOne = (Model) =>
     res.status(200).json({ data: document });
   });
 
-exports.getAll = (Model, modelName = '') =>
+exports.getAll = (Model, modelName = "") =>
   asyncHandler(async (req, res) => {
     let filter = {};
     if (req.filterObj) {
